@@ -1,22 +1,41 @@
-// Dependencies
+// dependencies
+ express = require('express');
 const { ApolloServer, gql } = require('apollo-server-express');
-const express = require('express');
-const path = require('path');
 const db = require('./config/connection');
-const routes = require('./routes');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+const typeDefs = gql`
+  type Query {
+    property: String
+     Define more queries here
+  }
 
-// Remove static assets
-/*if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/build')));
-}
-app.use(routes);*/
+  type Mutation {
+     Define mutations here
+  }
+`;
+
+const resolvers = {
+  Query: {
+    property: () => 'string',
+    // Implement more resolvers for queries
+  },
+  Mutation: {
+    // Implement resolvers for mutations
+  },
+};
+
+const server = new ApolloServer({ typeDefs, resolvers });
+
+server.applyMiddleware({ app });
 
 db.once('open', () => {
-  app.listen(PORT, () => console.log(`🌍 Now listening on localhost:${PORT}`));
+  app.listen(PORT, () => 
+    console.log(`🌍 Now listening on localhost:${PORT}`)
+    );
 });
+

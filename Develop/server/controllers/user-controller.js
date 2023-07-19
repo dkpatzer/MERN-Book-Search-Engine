@@ -1,73 +1,81 @@
-// import user model
 const { User } = require('../models');
-// import sign token function from auth
-const { signToken } = require('../utils/auth');
 
 module.exports = {
-  // get a single user by either their id or their username
-  async getSingleUser({ user = null, params }, res) {
-    const foundUser = await User.findOne({
-      $or: [{ _id: user ? user._id : params.id }, { username: params.username }],
-    });
+  getSingleUser: async (parent, args, context, info) => {
+    const { id, username } = args; // Destructure the arguments
 
-    if (!foundUser) {
-      return res.status(400).json({ message: 'Cannot find a user with this id!' });
-    }
-
-    res.json(foundUser);
-  },
-  // create a user, sign a token, and send it back (to client/src/components/SignUpForm.js)
-  async createUser({ body }, res) {
-    const user = await User.create(body);
-
-    if (!user) {
-      return res.status(400).json({ message: 'Something is wrong!' });
-    }
-    const token = signToken(user);
-    res.json({ token, user });
-  },
-  // login a user, sign a token, and send it back (to client/src/components/LoginForm.js)
-  // {body} is destructured req.body
-  async login({ body }, res) {
-    const user = await User.findOne({ $or: [{ username: body.username }, { email: body.email }] });
-    if (!user) {
-      return res.status(400).json({ message: "Can't find this user" });
-    }
-
-    const correctPw = await user.isCorrectPassword(body.password);
-
-    if (!correctPw) {
-      return res.status(400).json({ message: 'Wrong password!' });
-    }
-    const token = signToken(user);
-    res.json({ token, user });
-  },
-  // save a book to a user's `savedBooks` field by adding it to the set (to prevent duplicates)
-  // user comes from `req.user` created in the auth middleware function
-  async saveBook({ user, body }, res) {
-    console.log(user);
     try {
-      const updatedUser = await User.findOneAndUpdate(
-        { _id: user._id },
-        { $addToSet: { savedBooks: body } },
-        { new: true, runValidators: true }
-      );
-      return res.json(updatedUser);
-    } catch (err) {
-      console.log(err);
-      return res.status(400).json(err);
+      const foundUser = await User.findOne({
+        $or: [{ _id: id }, { username }],
+      });
+
+      if (!foundUser) {
+        throw new Error('Cannot find a user with this id!');
+      }
+
+      return foundUser;
+    } catch (error) {
+      throw new Error(error.message);
     }
   },
-  // remove a book from `savedBooks`
-  async deleteBook({ user, params }, res) {
-    const updatedUser = await User.findOneAndUpdate(
-      { _id: user._id },
-      { $pull: { savedBooks: { bookId: params.bookId } } },
-      { new: true }
-    );
-    if (!updatedUser) {
-      return res.status(404).json({ message: "Couldn't find user with this id!" });
+
+  createUser: async (parent, args, context, info) => {
+    const { body } = args; // Destructure the arguments
+
+    try {
+      const user = await User.create(body);
+
+      const token = /* Generate token using appropriate logic */;
+
+      return { token, user };
+    } catch (error) {
+      throw new Error('Something went wrong!');
     }
-    return res.json(updatedUser);
+  },
+
+  login: async (parent, args, context, info) => {
+    const { username, email, password } = args; // Destructure the arguments
+
+    try {
+      const user = await User.findOne({ $or: [{ username }, { email }] });
+
+      if (!user) {
+        throw new Error("Can't find this user");
+      }
+
+      const correctPw = await user.isCorrectPassword(password);
+
+      if (!correctPw) {
+        throw new Error('Wrong password!');
+      }
+
+      const token = /* Generate token using appropriate logic */;
+
+      return { token, user };
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  },
+
+  saveBook: async (parent, args, context, info) => {
+    const { user, body } = args; // Destructure the arguments
+
+    try {
+      // Logic to save a book to the user's `savedBooks` field
+      return updatedUser;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  },
+
+  deleteBook: async (parent, args, context, info) => {
+    const { user, params } = args; // Destructure the arguments
+
+    try {
+      // Logic to remove a book from `savedBooks`
+      return updatedUser;
+    } catch (error) {
+      throw new Error(error.message);
+    }
   },
 };
