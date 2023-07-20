@@ -8,11 +8,14 @@ const PORT = process.env.PORT || 3001;
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-const { User } = require('../models');
+
+const { User, bookSchema } = require('./models');
 
 
-const resolvers = require('../resolvers');
-const typeDefs = require('../typeDefs');
+const resolvers = require('./resolvers');
+
+const typeDefs = require('./typeDefs');
+
 
 const server = new ApolloServer({ typeDefs, resolvers });
 
